@@ -4,6 +4,8 @@ ifeq ($(wildcard $(LOCAL_PATH)/../demux),)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdmx_client
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MULTILIB := 32
 LOCAL_MODULE_SUFFIX := .so
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
@@ -14,6 +16,8 @@ include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libdmx_client_sys
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MULTILIB := 32
 LOCAL_MODULE_SUFFIX := .so
 LOCAL_MODULE_TAGS := optional
@@ -24,6 +28,8 @@ include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := b472711b-3ada-4c37-8c2a-7c64d8af0223
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MULTILIB := 32
 LOCAL_MODULE_SUFFIX := .ta
 LOCAL_STRIP_MODULE := false
