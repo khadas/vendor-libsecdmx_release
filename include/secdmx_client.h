@@ -6,10 +6,11 @@ extern "C" {
 #endif
 
 /**\brief Init Secure Demux client
+ * \param[in] use_ts_clone The ts clone enable statue
  * \retval SECDMX_SUCCESS On Success
  * \return Error code.
  */
-int SECDMX_Init(void);
+int SECDMX_Init(int use_ts_clone);
 
 /**\brief Deinit Secure Demux client
  * \retval SECDMX_SUCCESS On Success
@@ -19,12 +20,12 @@ int SECDMX_Deinit(void);
 
 /**\brief Allocate DVR Buffer for specific frontend device
  * \param[in] sid The frontend device id
- * \param[in] size The allocate size
+ * \param[in,out] size The allocate and actually allocated size
  * \param[out] addr The DVR buffer address
  * \retval SECDMX_SUCCESS On Success
  * \return Error code.
  */
-int SECDMX_AllocateDVRBuffer(int sid, size_t size, size_t *addr);
+int SECDMX_AllocateDVRBuffer(int sid, size_t *size, size_t *addr);
 
 /**\brief Free specific DVR buffer
  * \param[in] sid The front device id
@@ -76,6 +77,124 @@ int SECDMX_GetOutputBufferStatus(size_t handle, size_t *start_addr, size_t *len)
  * \return Error code.
  */
 int SECDMX_ProcessData(int sid, size_t wp);
+
+//----------------------------------------------------------------------------
+// Below is a separate functional module
+//----------------------------------------------------------------------------
+
+/**SECTS Indexer's flag.*/
+enum {
+  SECTS_INDEX_PUSI      = 0x01,     /**< PUSI type.*/
+  SECTS_INDEX_IFRAME    = 0x02,     /**< IFrame type.*/
+  SECTS_INDEX_PTS       = 0x04,     /**< PTS type.*/
+};
+
+/**SECTS Video stream format.*/
+typedef enum {
+  SECTS_VIDEO_FORMAT_MPEG2,         /**< MPEG2.*/
+  SECTS_VIDEO_FORMAT_H264,          /**< H264.*/
+  SECTS_VIDEO_FORMAT_HEVC           /**< HEVC.*/
+} SECTS_VideoStreamFormat_t;
+
+/**SECTS Indexer's PUSI state.*/
+typedef enum {
+  SECTS_INDEXER_PUSI_NONE,          /**< PUSI init state.*/
+  SECTS_INDEXER_PUSI_PARSING,       /**< PUSI parsing state.*/
+  SECTS_INDEXER_PUSI_DONE,          /**< PUSI parse done state.*/
+  SECTS_INDEXER_PUSI_INVALID        /**< PUSI invalid state.*/
+} SECTS_IndexerPusiState_t;
+
+/**SECTS Indexer's Ring buffer.*/
+typedef struct {
+  size_t buffer;                    /**< Ring buffer's address.*/
+  size_t len;                       /**< Ring buffer's length.*/
+  size_t w_offset;                  /**< Ring buffer's write offset.*/
+  size_t r_offset;                  /**< Ring buffer's read offset.*/
+  size_t size;                      /**< Ring buffer's data length.*/
+} SECTS_IndexerRingBuffer_t;
+
+/**SECTS Indexer's PUSI.*/
+typedef struct {
+  size_t start;                     /**< Start position of PUSI.*/
+  size_t end;                       /**< End position of PUSI.*/
+  int flags;                        /**< SECTS_INDEX_PUSI etc.*/
+  uint64_t pts;                     /**< Pts of the PUSI.*/
+  SECTS_IndexerPusiState_t state;   /**< State of the PUSI.*/
+} SECTS_IndexerPusi_t;
+
+/**\brief Init Secure TS client
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_Init(void);
+
+/**\brief Open a secure TS indexer session
+ * \param[out] session The created session
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_OpenSession(size_t *session);
+
+/**\brief Close a secure TS indexer session
+ * \param[in] session The created session
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_CloseSession(size_t session);
+
+/**\brief Allocate a secure buffer for secure dvr
+ * \param[in] session The session which the secure buffer belongs to
+ * \param[in] size The secure buffer size
+ * \retval a pointer On Success
+ * \return buffer address.
+ */
+void *SECTS_AllocSecureBuffer(size_t session, size_t size);
+
+/**\brief Free a secure buffer
+ * \param[in] session The session which the secure buffer belongs to
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_FreeSecureBuffer(size_t session, void *p);
+
+/**\brief Set video parameters for ts indexer
+ * \param[in] session The session which the video belongs to
+ * \param[in] pid The video pid
+ * \param[in] pid The video format
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_SetVideoParams(size_t session, int pid, int format);
+
+/**\brief Set audio parameters for ts indexer
+ * \param[in] session The session which the audio belongs to
+ * \param[in] pid The audio pid
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_SetAudioParams(size_t session, int pid);
+
+/**\brief Parse the indexs from the ring buffer
+ * \param[in] session The session which the ring buffer belongs to
+ * \param[in,out] ringbuf The ringbu buffer struct
+ * \param[in,out] pusi The pusi parsed from the ring buffer
+ * \param[in] max_pusi_cnt The max pusi number that can stored
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_IndexerParse(
+        size_t session,
+        SECTS_IndexerRingBuffer_t *ringbuf,
+        SECTS_IndexerPusi_t *pusi,
+        size_t max_pusi_cnt);
+
+size_t SECTS_Map2InjBuff(size_t session, size_t sec_buf, size_t len);
+
+/**\brief Deinit Secure TS client
+ * \retval 0 On Success
+ * \return Error code.
+ */
+int SECTS_Deinit(void);
 
 #ifdef __cplusplus
 }
